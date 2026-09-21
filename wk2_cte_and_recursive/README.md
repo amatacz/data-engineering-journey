@@ -46,3 +46,22 @@ Przed napisaniem SQL, odpowiedz sobie:
 - `date_trunc('day', ts)` zeruje godzinę, ale **zwraca nadal `timestamptz`** — wartość wciąż "pamięta" swoją strefę czasową, więc odejmowanie dwóch takich wartości w okolicach zmiany czasu (DST) daje wynik zafałszowany o godziny (`2404 days 23:00:00` zamiast równych 2404 dni).
 - `ts::date` rzutuje na typ **bez** komponentu czasowego i strefy w ogóle — to jedyny bezpieczny sposób liczenia różnicy w pełnych dniach kalendarzowych.
 - Zasada: **do arytmetyki na dniach kalendarzowych zawsze używać `::date`, nie `date_trunc`.**
+
+
+### 7. Doprecyzowanie: typy w CTE rekurencyjnym
+
+Typ każdej kolumny w *WITH RECURSIVE* jest ustalany przez bazowy (pierwszy) człon *SELECT* — nie istnieje żadna "kolumna z góry", do której coś pasuje albo nie. To jest konsekwencja ogólnej reguły UNION/UNION ALL: każdy SELECT łączony w ten sposób musi zwracać zgodne typy kolumn. W rekurencji jest to bardziej widoczne, bo baza i człon rekurencyjny są zapisane osobno.
+
+Przykład: min(o_orderdate)::date w bazie ustala, że cała kolumna ma być typu date. Jeśli człon rekurencyjny policzy date + interval (co Postgres cicho awansuje do timestamp), powstaje niezgodność z typem ustalonym przez bazę → błąd 42804.
+
+Natomiast timestamp + interval zostaje typem timestamp (nie ma do czego awansować — timestamp już ma pełną precyzję czasową), więc baza (timestamp) i rekurencja (timestamp) się zgadzają i błędu nie ma.
+
+Zasada: dodawanie interval do typu, który już ma komponent czasowy (timestamp), nie zmienia typu. Dodawanie interval do typu bez komponentu czasowego (date) awansuje go do timestamp — i to trzeba świadomie obsłużyć (albo dodawać integer zamiast interval, albo rzutować wynik z powrotem na ::date).
+
+### 8. Doprecyzowanie: cykle a osiągalność od punktu startowego
+
+Cykl w danych sam w sobie nie gwarantuje zawieszenia rekurencji. Kluczowe pytanie to: czy istnieje ciągła ścieżka JOIN-ów łącząca punkt startowy rekurencji (bazowy człon) z tym cyklem?
+
+Rekurencja działa wyłącznie przez podążanie za JOIN-em krok po kroku, zaczynając od bazy. Wiersz, do którego nie prowadzi żaden łańcuch JOIN-ów od bazy, nigdy nie zostanie znaleziony — nie chodzi o to, że pętla jest "omijana", tylko że silnik w ogóle tam nie dociera.
+Przykład hierarchii pracowników (baza: manager_id IS NULL, czyli konkretna, jedna osoba na szczycie): cykl między dwiema innymi osobami, niepołączony żadną ścieżką z korzeniem, jest izolowaną "wysepką" w grafie — nieosiągalną, więc nieszkodliwą dla tej konkretnej rekurencji (ale nadal błędem w danych, wykrywalnym osobnym zapytaniem).
+Przykład łańcucha dostawców zapasowych (baza: konkretny punkt, np. s_suppkey = 1): jeśli cykl leży na trasie prowadzącej od punktu startowego (np. 1→2→3→4→5→2→...), jest osiągalny — i bez zabezpieczenia path doprowadzi do nieskończonej pętli.

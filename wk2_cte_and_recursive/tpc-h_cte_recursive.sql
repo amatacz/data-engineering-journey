@@ -101,7 +101,7 @@ order by level;
 -- generowanie serii dat.
 -- ==========================
 
-select o_orderkey, o_orderdate from tpch.orders order by o_orderkey limit 5;
+select distinct(o_orderdate) from tpch.orders order by o_orderdate limit 7;
 
 with recursive dates as (
 	select MIN(o_orderdate::date) as calendar_date
@@ -115,6 +115,46 @@ with recursive dates as (
 
 )
 select calendar_date from dates;
+
+
+-- ==========================
+-- Wygeneruj rekurencyjnie serię godzin (nie dni) pokrywającą pierwsze 7 dni 
+-- od najwcześniejszej daty zamówienia w orders (czyli 168 wierszy: 7 dni × 24h).
+-- ==========================
+
+with recursive
+    date_bounds as (
+        select min(o_orderdate)::date as start_date
+        from tpch.orders
+    ),
+    hours as (
+        select start_date::timestamp as order_hour
+        from date_bounds
+
+        union all
+
+        select order_hour + interval '1 hour'
+        from hours
+        where order_hour + interval '1 hour' <= (select start_date from date_bounds) + interval '7 days' - interval '1 hour'
+    )
+select * from hours
+order by order_hour;
+
+
+-- =============================
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
