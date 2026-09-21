@@ -1,1 +1,6 @@
 .env
+csv/
+postgresql_data/
+tpch-setup/
+docker-compose.yml
+tpch.duckdb
