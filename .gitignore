@@ -6,3 +6,4 @@ docker-compose.yml
 tpch.duckdb
 yellow_tripdata/
 .DS_Store
+yellow_tripdata_*
