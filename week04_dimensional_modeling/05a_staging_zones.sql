@@ -1,6 +1,6 @@
 -- create table on staging
 create table if not exists staging.taxi_zones_v1 (
-	location_id smallint,
+	location_id integer,
 	borough text,
 	zone text,
 	service_zone text

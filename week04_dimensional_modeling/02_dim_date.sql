@@ -1,14 +1,14 @@
 create table if not exists dw.dim_date (
 	date_key integer primary key,
 	full_date date not null unique,
-	year smallint,
-	quarter smallint,
-	month smallint,
+	year integer,
+	quarter integer,
+	month integer,
 	month_name text,
-	day_of_month smallint,
-	day_of_week smallint,
+	day_of_month integer,
+	day_of_week integer,
 	day_name text,
-	iso_week smallint,
+	iso_week integer,
 	is_weekend boolean
 );
 
@@ -30,14 +30,14 @@ insert into dw.dim_date(
 select 
 	to_char(d, 'YYYYMMDD')::integer as date_key,
 	d::date as full_date,
-	extract(year from d)::smallint as year,
-	extract(quarter from d)::smallint as quarter,
-	extract(month from d)::smallint as month,
+	extract(year from d)::integer as year,
+	extract(quarter from d)::integer as quarter,
+	extract(month from d)::integer as month,
 	trim(to_char(d, 'Month')) as month_name,
-	extract(day from d)::smallint as day_of_month,
-	extract(isodow from d)::smallint as day_of_week,
+	extract(day from d)::integer as day_of_month,
+	extract(isodow from d)::integer as day_of_week,
 	trim(to_char(d, 'Day')) as day_name,
-	extract(week from d)::smallint as iso_week,
+	extract(week from d)::integer as iso_week,
 	extract(isodow from d) in (6, 7) as is_weekend
 from generate_series (
 	'2026-01-01'::date,

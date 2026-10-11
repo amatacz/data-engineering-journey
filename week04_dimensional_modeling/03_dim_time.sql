@@ -1,7 +1,7 @@
 create table if not exists dw.dim_time (
-    time_key smallint primary key,
-    hour smallint,
-    minute smallint,
+    time_key integer primary key,
+    hour integer,
+    minute integer,
     time_of_day text,
     is_rush_hour boolean
 );
