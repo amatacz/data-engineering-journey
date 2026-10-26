@@ -123,7 +123,7 @@ Wymiar dw.dim_payment oraz dw.dim_vendorzawierają informacje na temat dostępny
 * Ok. 25% obserwacji w tabel i faktów to payment_type 0 -> Flex Fare trip, potwierdzono w słowniku, że są to przejazdy przedpłacone, ze stałą, znaną z góry ceną (na wzór Ubera czy Lyft)
 
 ### 7. Diagram
-TBU
+![alt text](data_model.png)
 
 
 ### 8. Walidacja
